@@ -88,6 +88,8 @@ angular.module("list/list.tpl.html", []).run(["$templateCache", function($templa
     "                  <li><a ng-click=\"openACLEditor(resources, res.uri, res.type)\"><i class=\"fa fa-2x fa-unlock-alt fa-fw vmiddle\"></i> Permissions</a></li>\n" +
     "                  <li><a ng-click=\"openDelete(res.uri)\"><i class=\"fa fa-2x fa-trash-o fa-fw vmiddle\"></i> Delete</a></li>\n" +
     "                  <li><a ng-click=\"openFileEditor(res.uri)\"><i class=\"fa fa-2x fa-pencil fa-fw vmiddle\"></i> Edit</a></li>\n" +
+    "                  <li><a ng-click=\"openExport(res.uri)\"><i class=\"fa fa-2x fa-upload fa-fw vmiddle\"></i> Export</a></li>\n" +
+    "                  <li><a ng-click=\"openNewImport(res.uri)\"><i class=\"fa fa-2x fa-download fa-fw vmiddle\"></i> Import</a></li>\n" +
     "                </ul>\n" +
     "              </div>\n" +
     "          </td>\n" +
@@ -182,6 +184,43 @@ angular.module("list/list.tpl.html", []).run(["$templateCache", function($templa
     "\n" +
     "  <!-- Upload file modal -->\n" +
     "  <script type=\"text/ng-template\" id=\"uploadfiles.html\">\n" +
+    "    <div>\n" +
+    "      <div class=\"modal-header\">\n" +
+    "        <h3 class=\"modal-title\">Upload files to <strong>{{container}}/</strong></h3>\n" +
+    "      </div>\n" +
+    "      <div class=\"modal-body\">\n" +
+    "        <input type=\"file\" ng-file-select=\"onFileSelect($files)\" data-multiple=\"true\" multiple=\"multiple\">\n" +
+    "        <div ng-file-drop=\"onFileSelect($files)\" ng-file-drag-over-class=\"'dropzone-on'\" class=\"dropzone\" ng-show=\"dropSupported\">\n" +
+    "          Drop files here\n" +
+    "        </div>\n" +
+    "        <div ng-file-drop-available=\"dropSupported=true\" ng-show=\"!dropSupported\">\n" +
+    "          HTML5 Drop File is not supported!\n" +
+    "        </div>\n" +
+    "        <table class=\"upload-files\" ng-show=\"selectedFiles.length > 0\">\n" +
+    "          <tr>\n" +
+    "            <td><strong>File name</strong></td>\n" +
+    "            <td><strong>Status</strong></td>\n" +
+    "            <td></td>\n" +
+    "          </tr>\n" +
+    "          <tr ng-repeat=\"file in selectedFiles track by $index\" ng-class=\"progress[file.name] == 100?'done':''\">\n" +
+    "            <td>{{file.name|truncate:25}}</td>\n" +
+    "            <td><div tooltip-placement=\"bottom\" tooltip=\"Uploading...{{progress[file.name]}}%\"><progressbar value=\"progress[file.name]\"></progressbar></div></td>\n" +
+    "            <td class=\"pull-right\">\n" +
+    "              <button ng-hide=\"progress[file.name] == 100\" class=\"btn btn-mini btn-default\" ng-click=\"abort(file.name)\"><i class=\"fa fa-2x fa-times\"></i></button>\n" +
+    "              <button ng-show=\"progress[file.name] == 100\" class=\"btn btn-mini btn-default\" ng-click=\"remove(file.name)\"><i class=\"fa fa-2x fa-trash-o\"></i></button>\n" +
+    "            </td>\n" +
+    "          </tr>\n" +
+    "        </table>\n" +
+    "      </div>\n" +
+    "      <div class=\"modal-footer\">\n" +
+    "        <button class=\"btn btn-default\" ng-click=\"clearUploaded()\" ng-show=\"selectedFiles.length > 0\">Clear files</button>\n" +
+    "        <button class=\"btn btn-default\" ng-click=\"cancel()\">Close</button>\n" +
+    "      </div>\n" +
+    "    </div>\n" +
+    "  </script>\n" +
+    "\n" +
+    "  <!-- Import file modal -->\n" +
+    "  <script type=\"text/ng-template\" id=\"importNode.html\">\n" +
     "    <div>\n" +
     "      <div class=\"modal-header\">\n" +
     "        <h3 class=\"modal-title\">Upload files to <strong>{{container}}/</strong></h3>\n" +

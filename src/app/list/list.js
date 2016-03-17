@@ -524,11 +524,54 @@ angular.module( 'App.list', [
     });
     modalInstance.result.then($scope.updateFile);
   };
+  //Export node
+  $scope.openExport = function (uri) {
+    uri += ",system/export";
+    
+    $http({
+        method: 'GET',
+        url: uri,
+        headers: {
+          'Accept': 'application/zip'
+        },
+        withCredentials: true
+      }).
+      success(function(data, status, headers) {
+        if (status == 200 || status == 201) {
+          notify('Success', 'Node exported.');
+        }
+      }).
+      error(function(data, status) {
+        if (status == 401) {
+          notify('Forbidden', 'Authentication required to edit the resource.');
+        } else if (status == 403) {
+          notify('Forbidden', 'You are not allowed to edit the resource.');
+        } else {
+          notify('Failed', status + " " + data);
+        }
+      });
+  };
   // New file upload dialog
   $scope.openNewUpload = function (url) {
     var modalInstance = $modal.open({
       templateUrl: 'uploadfiles.html',
       controller: ModalUploadCtrl,
+      size: 'sm',
+      resolve: {
+        url: function () {
+          return url;
+        },
+        resources: function () {
+          return $scope.resources;
+        }
+      }
+    });
+  };
+  //New file upload dialog
+  $scope.openNewImport = function (url) {
+    var modalInstance = $modal.open({
+      templateUrl: 'importNode.html',
+      controller: ModalImportCtrl,
       size: 'sm',
       resolve: {
         url: function () {
@@ -836,6 +879,88 @@ var ModalUploadCtrl = function ($scope, $modalInstance, $stateParams, $http, $up
         // file is uploaded successfully
         $scope.filesUploading--;
         addResource($scope.resources, $scope.url+encodeURI(file.name), 'File', file.size);
+        refreshResource($http, $scope.resources, $scope.url+encodeURI(file.name), $scope.key);
+    });
+  };
+
+  $scope.onFileSelect = function($files) {
+    $scope.selectedFiles = $files;
+    $scope.filesUploading = $files.length;
+
+    for (var i = 0; i < $files.length; i++) {
+      var file = $files[i];
+      $scope.doUpload(file);
+    }
+  };
+
+  $scope.ok = function () {
+    $modalInstance.close();
+  };
+
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+};
+
+var ModalImportCtrl = function ($scope, $modalInstance, $stateParams, $http, $upload, url, resources) {
+  $scope.url = url + ",system/import";
+  $scope.resources = resources;
+  $scope.container = basename(url);
+  $scope.uploading = [];
+  $scope.progress = [];
+  $scope.filesUploading = 0;
+
+  $scope.key = '';
+  if ($stateParams.key && $stateParams.key.length > 0) {
+    $scope.key += '?key='+$stateParams.key;
+  }
+
+  // stop/abort the upload of a file
+  $scope.abort = function(index) {
+    console.log($scope.uploading.length);
+    $scope.uploading[index].abort();
+  };
+
+  // remove file from upload list
+  $scope.remove = function(index) {
+    if ($scope.selectedFiles.length > 0) {
+      for (var i = $scope.selectedFiles.length - 1; i >= 0; i--) {
+        if(decodeURI($scope.selectedFiles[i].name) == decodeURI(index)) {
+          $scope.selectedFiles.splice(i, 1);
+          $scope.uploading[index].abort();
+          $scope.uploading[index] = null;
+          break;
+        }
+      }
+    }
+  };
+
+  $scope.clearUploaded = function () {
+    $scope.selectedFiles = [];
+  };
+
+  $scope.$watch('filesUploading', function(newVal, oldVal) {
+    if (oldVal > 0 && newVal === 0) {
+      notify('Success', 'Finished uploading files!');
+    }
+  });
+
+  // TODO: handle errors during upload
+  $scope.doUpload = function(file) {
+    $scope.progress[file.name] = 0;
+    file.name = file.name.replace(/^\s+|\s+$/g, "");
+    $scope.uploading[file.name] = $upload.upload({
+        url: $scope.url+$scope.key,
+        method: 'POST',
+        withCredentials: true,
+        file: file
+      }).progress(function(evt) {
+        var progVal = parseInt(100.0 * evt.loaded / evt.total, 10);
+        $scope.progress[file.name] = progVal;
+      }).success(function(data, status, headers, config) {
+        // file is uploaded successfully
+        $scope.filesUploading--;
+        //addResource($scope.resources, $scope.url+encodeURI(file.name), 'File', file.size);
         refreshResource($http, $scope.resources, $scope.url+encodeURI(file.name), $scope.key);
     });
   };
