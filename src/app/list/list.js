@@ -532,7 +532,7 @@ angular.module( 'App.list', [
         method: 'GET',
         url: uri,
         headers: {
-          'Accept': 'application/zip'
+          'Accept': 'application/x-zip-compressed'
         },
         withCredentials: true
       }).
